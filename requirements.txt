@@ -1,5 +1,6 @@
+Flask[async]
 covalent-api-sdk==0.6.1
-Flask==3.0.0
 web3==6.13.0
 python-dotenv==1.0.0
 pymongo==4.6.1
+asyncio==3.4.3

@@ -1,10 +1,16 @@
 from covalent import CovalentClient
+from dotenv import load_dotenv
 from helpers.data_converter import convert_to_dict
 import asyncio
+import os
 import requests
 from requests.auth import HTTPBasicAuth
 
-def get_balance(covalent_api_key, chain, wallet):
+load_dotenv()
+covalent_api_key = os.getenv("COVALENT_API_KEY")
+chain = os.getenv("CHAIN")
+
+def get_balance(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.balance_service.get_native_token_balance(chain, wallet)
     
@@ -15,7 +21,6 @@ def get_balance(covalent_api_key, chain, wallet):
             balance_wei = balance_info.get("balance", "0")
             quote = balance_info.get("quote", 0)
             
-            # Convert balance to Ether
             balance_ether = float(balance_wei) / 10**18
             
             return {
@@ -25,22 +30,32 @@ def get_balance(covalent_api_key, chain, wallet):
 
     return {"error": "Unable to process the request"}
 
-def get_approvals(covalent_api_key, chain, wallet):
+def get_approvals(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.security_service.get_approvals(chain, wallet)
     return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
 
-def get_token_balances(covalent_api_key, chain, wallet):
+def get_token_balances(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.balance_service.get_token_balances_for_wallet_address(chain, wallet, no_spam=True)
     return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
 
-def get_summary_transactions(covalent_api_key, chain, wallet):
+def get_summary_transactions(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.transaction_service.get_transaction_summary(chain, wallet)
     return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
 
-async def get_first_transaction(covalent_api_key, chain, wallet):
+def get_transactions_paginated(wallet, page):
+    url = f"https://api.covalenthq.com/v1/eth-mainnet/address/{wallet}/transactions_v3/page/{page}/?with-safe=true"
+    headers = {
+        "accept": "application/json",
+    }
+    basic = HTTPBasicAuth(covalent_api_key, '')
+    response = requests.get(url, headers=headers, auth=basic)
+
+    return response.json() if response else {"data": {"items": []}}
+
+async def get_first_transaction(wallet):
     c = CovalentClient(covalent_api_key)
     try:
         transactions = []
@@ -58,7 +73,7 @@ async def get_first_transaction(covalent_api_key, chain, wallet):
         print(e)
 
 
-async def get_latest_transactions(covalent_api_key, chain, wallet, limit=20):
+async def get_latest_transactions(wallet, limit=20):
     c = CovalentClient(covalent_api_key)
     try:
             transactions = []
@@ -74,53 +89,11 @@ async def get_latest_transactions(covalent_api_key, chain, wallet, limit=20):
             print(e)
 
 
-def extract_token_info(token):
-    return {
-        "balance": token.get("balance", 0),
-        "contract_address": token.get("contract_address", ""),
-        "decimals": token.get("contract_decimals", 0),
-        "contract_name": token.get("contract_name", ""),
-        "contract_ticker_symbol": token.get("contract_ticker_symbol", ""),
-        "logo_url": token.get("logo_url", ""),
-        "native_token": token.get("native_token", False),
-        "pretty_quote": float(token.get("pretty_quote", "0").replace('$', '').replace(',', '')) if token.get("pretty_quote") is not None else 0,
-        "quote_rate": token.get("quote_rate", 0.0),
-    }
-
-def calculate_total_quote(simplified_token_balances):
-    total_quote = 0.0
-
-    for token in simplified_token_balances:
-        if not token["native_token"] and token["pretty_quote"] is not None:
-            total_quote += token["pretty_quote"]
-
-    return total_quote
-
-def extract_transaction_info(transactions):
-    total_gas_spent = sum(t.get("gas_spent", 0) for t in transactions)
-    total_gas_quote = sum(float(t.get("gas_quote", 0)) for t in transactions)
-    total_successful = sum(1 for t in transactions if t.get("successful", False))
-    total_failed = sum(1 for t in transactions if not t.get("successful", False))
-    total_value = sum(float(t.get("value_quote", 0)) for t in transactions)
-
-    totals_dict = {
-        "total_gas_spent": total_gas_spent,
-        "total_gas_quote": total_gas_quote,
-        "total_successful": total_successful,
-        "total_failed": total_failed,
-        "total_value": total_value,
-    }
-
-    return totals_dict
+def get_spam(wallet):
+    c = CovalentClient(covalent_api_key)
+    response = c.balance_service.get_token_balances_for_wallet_address(chain, wallet, no_spam=False)
+    return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
 
 
 
-
-def extract_approvals_items(approvals):
-    items = approvals.get("items", [])
-    total_at_risk = sum(float(approval.get("pretty_value_at_risk_quote", "0").replace('$', '').replace(',', '')) if approval.get("pretty_value_at_risk_quote") is not None else 0 for approval in items)
-    return {
-        "items": items,
-        "total_at_risk": total_at_risk
-    }
 

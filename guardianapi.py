@@ -120,7 +120,7 @@ async def get_transactions():
     return jsonify(response)
 
 @app.route('/get_approvals', methods=['GET'])
-async def get_approvals():
+async def get_approvalx():
     client_key = request.headers.get('Authorization')
     if client_key != secret_key:
         abort(404)

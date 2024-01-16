@@ -125,7 +125,7 @@ async def get_approvals():
     if client_key != secret_key:
         abort(404)
     wallet = request.args.get('wallet')
-    page = request.args.get('page')
+    
     if not wallet:
         return jsonify({"error": "Wallet address is required"}), 400
     approvals = get_approvals(wallet)

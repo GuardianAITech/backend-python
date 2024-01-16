@@ -119,6 +119,25 @@ async def get_transactions():
     response = {"items": items}
     return jsonify(response)
 
+@app.route('/get_approvals', methods=['GET'])
+async def get_approvals():
+    client_key = request.headers.get('Authorization')
+    if client_key != secret_key:
+        abort(404)
+    wallet = request.args.get('wallet')
+    page = request.args.get('page')
+    if not wallet:
+        return jsonify({"error": "Wallet address is required"}), 400
+    approvals = get_approvals(wallet)
+    approvals_items = extract_approvals_items(approvals)
+    response = {
+       
+        "approvals": approvals_items,
+        
+    }
+    return jsonify(response)
+
+
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 5000))
     app.run(port=port, debug=True)

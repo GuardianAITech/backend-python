@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 def extract_token_info(token):
     balance = token.get("balance", 0)
     
@@ -64,3 +66,51 @@ def filter_spam_and_dust_items(data):
         }
     else:
         return {"spam_count": 0, "spam_items": [], "dust_count": 0, "dust_items": []}
+    
+
+def compare_transaction_times(transactions, internal_transactions):
+    if not transactions or not internal_transactions:
+        return {"error": "No transactions or internal transactions provided"}
+
+    latest_transaction_time = get_latest_timestamp(transactions)
+    latest_internal_time = get_latest_timestamp(internal_transactions)
+
+    if latest_transaction_time is None and latest_internal_time is None:
+        return {"error": "No valid timestamps found"}
+
+    if latest_transaction_time is None:
+        latest_time = latest_internal_time
+    elif latest_internal_time is None:
+        latest_time = latest_transaction_time
+    else:
+        latest_time = max(latest_transaction_time, latest_internal_time)
+
+    if latest_time is None:
+        return {"error": "No valid timestamps found"}
+
+    time_difference = datetime.now(timezone.utc) - latest_time
+    days_ago = time_difference.days
+    hours, remainder = divmod(time_difference.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    response = {
+        "days_ago": days_ago,
+        "hours_ago": hours,
+        "minutes_ago": minutes,
+        "seconds_ago": seconds,
+        "sentence": f"The wallet was used {days_ago} days, {hours} hours, {minutes} minutes, and {seconds} seconds ago."
+    }
+
+    if days_ago >= 90:
+        response["warning"] = "This wallet could be inactive."
+
+    return response
+
+def get_latest_timestamp(transactions):
+    timestamps = [transaction.get("block_signed_at") for transaction in transactions if transaction.get("block_signed_at")]
+    timestamps = [timestamp for timestamp in timestamps if timestamp]
+
+    if timestamps:
+        return max(timestamps)
+
+    return None

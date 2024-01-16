@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, abort
 from dotenv import load_dotenv
 from helpers.covalent_helpers import get_approvals, get_token_balances, get_summary_transactions,get_transactions_paginated,get_latest_transactions,get_first_transaction,get_balance,get_spam
 from helpers.etherscan_helpers import get_internal_transactions,get_current_block,get_block_number_3_months_ago,get_normal_transactions
-from helpers.filters import extract_token_info, extract_approvals_items,extract_transaction_info,calculate_total_quote,filter_spam_and_dust_items
+from helpers.filters import extract_token_info, extract_approvals_items,extract_transaction_info,calculate_total_quote,filter_spam_and_dust_items,compare_transaction_times
 from helpers.data_converter import compare_last_scan
 from helpers.database import get_latest_last_scan,save_response_to_database
 from helpers.mongodb_installer import prepare_mongodb
@@ -58,9 +58,9 @@ async def scan():
     total_balance_dict = {"total_balance": total_balance, "total_asset_quote":total_quote}
     
     simplified_token_balances.append(total_balance_dict)
+    last_activity_info = compare_transaction_times(latest_transactions, last_internals)
 
-
-
+    
     ##### Data for security checks ####
     normal_transactions = get_normal_transactions(wallet, ago_block, current_block, page=1)
 
@@ -72,7 +72,8 @@ async def scan():
         "token_balances": simplified_token_balances,
         "total_transactions": summary_transactions.get("items", [])[0].get("total_count"),
         "latest_transactions": [{"total_transaction_info": extracted_transaction_info}] + latest_transactions,
-        "lastblock":current_block
+        "lastblock":current_block,
+        "last_activity":last_activity_info
     }
     response["last_scan"] = {
             "last_total_native_balance": total_balance.get("balance_ether"),

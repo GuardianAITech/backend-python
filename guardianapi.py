@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify, abort
 from dotenv import load_dotenv
 from helpers.covalent_helpers import get_approvals, get_token_balances, get_summary_transactions,get_transactions_paginated,get_latest_transactions,get_first_transaction,get_balance,get_spam
-from helpers.etherscan_helpers import get_internal_transactions,get_current_block,get_block_number_3_months_ago,get_normal_transactions
+from helpers.etherscan_helpers import get_internal_transactions,get_current_block,get_block_number_3_months_ago,get_normal_transactions,get_transaction_details
 from helpers.filters import extract_token_info, extract_approvals_items,extract_transaction_info,calculate_total_quote,filter_spam_and_dust_items,compare_transaction_times
 from helpers.data_converter import compare_last_scan
 from helpers.database import get_latest_last_scan,save_response_to_database
 from helpers.mongodb_installer import prepare_mongodb
+
 import os
 import asyncio
 
@@ -38,6 +39,7 @@ async def scan():
     ]
     total_quote = calculate_total_quote(simplified_token_balances)
     summary_transactions = get_summary_transactions(wallet)
+    summary_items = summary_transactions.get("items", [])
     latest_transactions = await get_latest_transactions(wallet)
     ts = await get_first_transaction(wallet)
     total_balance = get_balance(wallet)
@@ -70,7 +72,7 @@ async def scan():
         "first_transaction":ts,
         "approvals": approvals_items,
         "token_balances": simplified_token_balances,
-        "total_transactions": summary_transactions.get("items", [])[0].get("total_count"),
+        "total_transactions": summary_items[0].get("total_count") if summary_items else 0,
         "latest_transactions": [{"total_transaction_info": extracted_transaction_info}] + latest_transactions,
         "lastblock":current_block,
         "last_activity":last_activity_info
@@ -83,7 +85,7 @@ async def scan():
             "last_dust_count": spam_filtered.get("dust_count"),
             "last_spam_count": spam_filtered.get("spam_count"),
             "last_total_at_risk": approvals_items.get("total_at_risk"),
-            "last_total_transactions": summary_transactions.get("items", [])[0].get("total_count"),
+            "last_total_transactions": summary_items[0].get("total_count") if summary_items else 0,
             "last_block": current_block
         }
     
@@ -136,6 +138,17 @@ async def get_approvalx():
         
     }
     return jsonify(response)
+
+
+@app.route('/analyze_transaction/<transaction_hash>', methods=['GET'])
+def analyze_transaction(transaction_hash):
+    # Fetch transaction details from Etherscan
+    transaction_details = get_transaction_details(transaction_hash)
+
+    # Calculate safety score
+    #safety_score = calculate_safety_score(transaction_details)
+    return jsonify({"transaction_details": transaction_details})
+    return jsonify({"transaction_details": transaction_details, "safety_score": safety_score})
 
 
 if __name__ == '__main__':

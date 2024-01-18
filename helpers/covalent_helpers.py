@@ -28,22 +28,27 @@ def get_balance(wallet):
                 "quote": quote,
             }
 
-    return {"error": "Unable to process the request"}
+    return {}
 
 def get_approvals(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.security_service.get_approvals(chain, wallet)
-    return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
+    return convert_to_dict(response.data) if response and not response.error else {}
+
+def get_transaction_detailed(tx):
+    c = CovalentClient(covalent_api_key)
+    response = c.transaction_service.get_transaction(chain, tx, with_dex=True,with_lending=True)
+    return convert_to_dict(response.data) if response and not response.error else {}
 
 def get_token_balances(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.balance_service.get_token_balances_for_wallet_address(chain, wallet, no_spam=True)
-    return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
+    return convert_to_dict(response.data) if response and not response.error else {}
 
 def get_summary_transactions(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.transaction_service.get_transaction_summary(chain, wallet)
-    return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
+    return convert_to_dict(response.data) if response and not response.error else {}
 
 def get_transactions_paginated(wallet, page):
     url = f"https://api.covalenthq.com/v1/eth-mainnet/address/{wallet}/transactions_v3/page/{page}/?with-safe=true"
@@ -92,7 +97,7 @@ async def get_latest_transactions(wallet, limit=20):
 def get_spam(wallet):
     c = CovalentClient(covalent_api_key)
     response = c.balance_service.get_token_balances_for_wallet_address(chain, wallet, no_spam=False)
-    return convert_to_dict(response.data) if response and not response.error else {"error": "Unable to process the request"}
+    return convert_to_dict(response.data) if response and not response.error else {}
 
 
 

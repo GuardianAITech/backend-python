@@ -1,21 +1,18 @@
+import json
+from helpers.data_converter import convert_to_dict
+from helpers.covalent_helpers import get_transaction_detailed
 
-weights = {
-    "approvals": 8,
-    "balance_changes": 9,
-    "token_transfers": 7,
-    "contract_events": 6,
-    "internal_transactions": 8,
-    "nonce": 9,
-    "code_metadata": 7,
-    "internal_contracts": 8,
-    "account_transactions": 8,
-    "contract_source_code": 9,
-    "token_approvals": 8,
-    "code_size": 7,
-    "gas_usage": 8,
-    "event_logs": 7,
-    "smart_contract_calls": 8,
-}
+with open('json/weights.json', 'r') as json_file:
+    weights = json.load(json_file)
+
+
+def get_transaction_details(tx_hash):
+    transaction = get_transaction_detailed(tx_hash)
+
+    if transaction:
+       return  convert_to_dict(transaction["items"])
+    else:
+        return []
 
 def calculate_safety_score(transaction_details):
     total_weight = sum(weights.values())

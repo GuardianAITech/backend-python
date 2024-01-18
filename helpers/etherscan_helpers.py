@@ -89,19 +89,4 @@ def get_block_number_by_timestamp(timestamp):
 
     return None
 
-def get_transaction_details(tx_hash):
-    params = {
-        "module": "proxy",
-        "action": "eth_getTransactionByHash",
-        "txhash": tx_hash,
-        "apikey": etherscan_api_key,
-    }
 
-    # Make the API request
-    response = requests.get(ETHERSCAN_API_BASE, params=params)
-    
-    # Parse the JSON response
-    result = response.json().get("result", {})
-    #status = result.get("status")
-
-    return result

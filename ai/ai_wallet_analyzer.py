@@ -1,7 +1,9 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+from flask import jsonify
 import os
 import json
+import re
 from helpers.data_converter import convert_to_dict
 from datetime import datetime
 load_dotenv()
@@ -58,8 +60,33 @@ def check_wallet_with_ai(wallet_details):
         )
         content = chat_completion.choices[0].message.content
         formatted_content = content.replace('\n', '')
-        print(formatted_content)
-        return formatted_content
+        if isinstance(formatted_content, str):
+            try:
+                response_dict = json.loads(formatted_content)
+            except json.JSONDecodeError:
+                        summary_match = re.search(r"'summary':\s*'((?:.*?)(?='safety_score'))", content, re.DOTALL)
+                        score_match = re.search(r"'safety_score':\s*'([^']*)'", content)
+                        summary = summary_match.group(1) if summary_match else 'No summary provided'
+                        safety_score = score_match.group(1) if score_match else 'No safety score provided'
+                        response_dict = {'summary': summary.strip(), 'safety_score': safety_score}
+                        return response_dict
+        elif isinstance(formatted_content, dict):
+            response_dict = formatted_content
+        else:
+            return {"error": "Unexpected response format from AI"}
+
+        # Extract summary and safety_score
+        summary = response_dict.get('summary', 'No summary provided')
+        safety_score = response_dict.get('safety_score', 'No safety score provided')
+
+        # Construct a new dictionary with just summary and safety_score
+        result = {
+            'summary': summary,
+            'safety_score': safety_score
+        }
+
+        return result
+
     except Exception as e:
         print(f"An error occurred: {e}")
-        return None
+        return {"error": str(e)}

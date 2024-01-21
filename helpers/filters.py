@@ -42,7 +42,24 @@ def extract_transaction_info(transactions):
 
     return totals_dict
 
-
+def filter_approvals_ai(approvals):
+    filtered_approvals = [
+        {
+            'balance_quote': item.get('balance_quote'),
+            'spenders': [
+                {
+                    'allowance': spender.get('allowance'),
+                    'block_signed_at': spender.get('block_signed_at'),
+                    'risk_factor': spender.get('risk_factor'),
+                    
+                }
+                for spender in item.get('spenders', [])
+            ],
+            'ticker_symbol': item.get('ticker_symbol')
+        }
+        for item in approvals.get('items', [])
+    ]
+    return filtered_approvals
 
 
 def extract_approvals_items(approvals):
@@ -66,7 +83,29 @@ def filter_spam_and_dust_items(data):
         }
     else:
         return {"spam_count": 0, "spam_items": [], "dust_count": 0, "dust_items": []}
-    
+
+def filter_spam_and_dust_items_ai(data):
+    if "items" in data:
+        spam_items = [item for item in data["items"] if item.get("is_spam")]
+
+        # Adjusted filtering for dust items
+        dust_items = [
+            {
+                'balance': item['balance'],
+                'contract_name': item['contract_name'],
+                'last_transferred_at': item['last_transferred_at']
+            }
+            for item in data["items"] if item.get("type") == "dust"
+        ]
+
+        return {
+            "spam_count": len(spam_items),
+            "spam_items": spam_items,
+            "dust_count": len(dust_items),
+            "dust_items": dust_items
+        }
+    else:
+        return {"spam_count": 0, "spam_items": [], "dust_count": 0, "dust_items": []}  
 
 def compare_transaction_times(transactions, internal_transactions):
     if not transactions or not internal_transactions:
@@ -114,3 +153,36 @@ def get_latest_timestamp(transactions):
         return max(timestamps)
 
     return None
+
+def filter_token_balances(token_balances):
+    filtered_balances = [
+        {
+            'balance': token.get('balance'),
+            'contract_ticker_symbol': token.get('contract_ticker_symbol')
+        }
+        for token in token_balances.get("items", [])
+    ]
+    return filtered_balances
+
+def filter_latest_transactions_for_ai(latest_transactions):
+    filtered_transactions = [
+        {
+            'block_height': transaction.get('block_height'),
+            'block_signed_at': transaction.get('block_signed_at'),
+            'fees_paid': transaction.get('fees_paid'),
+            'from_address': transaction.get('from_address'),
+            'gas_spent': transaction.get('gas_spent'),
+            'successful': transaction.get('successful'),
+            'to_address': transaction.get('to_address'),
+            'value': transaction.get('value'),
+            'value_quote': transaction.get('value_quote'),
+            'dex_details': transaction.get('dex_details'),
+            'lending_details': transaction.get('lending_details'),
+            'log_events': transaction.get('log_events')
+        }
+        for transaction in latest_transactions
+    ]
+    return filtered_transactions
+
+
+

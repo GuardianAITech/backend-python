@@ -3,7 +3,7 @@ import json
 from dotenv import load_dotenv
 from helpers.covalent_helpers import get_approvals, get_token_balances, get_summary_transactions,get_transactions_paginated,get_latest_transactions,get_first_transaction,get_balance,get_spam
 from helpers.etherscan_helpers import get_internal_transactions,get_current_block,get_block_number_3_months_ago,get_normal_transactions
-from helpers.filters import extract_token_info, extract_approvals_items,extract_transaction_info,calculate_total_quote,filter_spam_and_dust_items,compare_transaction_times
+from helpers.filters import extract_token_info, extract_approvals_items,extract_transaction_info,calculate_total_quote,filter_spam_and_dust_items,compare_transaction_times,filter_token_balances,filter_spam_and_dust_items_ai,filter_latest_transactions_for_ai,filter_approvals_ai
 from helpers.data_converter import compare_last_scan
 from helpers.database import get_latest_last_scan,save_response_to_database
 from helpers.mongodb_installer import prepare_mongodb
@@ -33,8 +33,10 @@ async def scan():
     ### DATA for frontend previews .. quickshow  and so on ###
 
     approvals = get_approvals(wallet)
+    ai_approvals = filter_approvals_ai(approvals)
     approvals_items = extract_approvals_items(approvals)
     token_balances = get_token_balances(wallet)
+    ai_bal = filter_token_balances(token_balances)
     simplified_token_balances = [
         extract_token_info(token)
         for token in token_balances.get("items", [])
@@ -49,9 +51,10 @@ async def scan():
 
     spam = get_spam(wallet)
     spam_filtered = filter_spam_and_dust_items(spam)
-   
+    ai_spam = filter_spam_and_dust_items_ai(spam)
 
     extracted_transaction_info = extract_transaction_info(latest_transactions)
+    ai_trans = filter_latest_transactions_for_ai(latest_transactions)
 
     current_block = get_current_block()
     ago_block = get_block_number_3_months_ago()
@@ -70,13 +73,12 @@ async def scan():
     normal_transactions = get_normal_transactions(wallet, ago_block, current_block, page=1)
 
     aidatas = {
-        "transactions": normal_transactions,
-        "spam": spam_filtered,
+        "spam": ai_spam,
         "last_internals":last_internals,
-        "approvals": approvals_items,
-        "token_balances": simplified_token_balances,
+        "approvals": ai_approvals,
+        "token_balances": ai_bal,
         "total_transactions": summary_items[0].get("total_count") if summary_items else 0,
-        "latest_transactions": [{"gas_info_and_total_info": extracted_transaction_info}] + latest_transactions,
+        "latest_transactions": [{"gas_info_and_total_info": extracted_transaction_info}] + ai_trans,
     }
 
     response = {

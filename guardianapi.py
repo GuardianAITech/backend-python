@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, abort
+import json
 from dotenv import load_dotenv
 from helpers.covalent_helpers import get_approvals, get_token_balances, get_summary_transactions,get_transactions_paginated,get_latest_transactions,get_first_transaction,get_balance,get_spam
 from helpers.etherscan_helpers import get_internal_transactions,get_current_block,get_block_number_3_months_ago,get_normal_transactions
@@ -7,6 +8,7 @@ from helpers.data_converter import compare_last_scan
 from helpers.database import get_latest_last_scan,save_response_to_database
 from helpers.mongodb_installer import prepare_mongodb
 from ai.ai_transaction_analyzer import get_transaction_details
+from ai.ai_wallet_analyzer import check_wallet_with_ai
 
 import os
 import asyncio
@@ -67,6 +69,16 @@ async def scan():
     ##### Data for security checks ####
     normal_transactions = get_normal_transactions(wallet, ago_block, current_block, page=1)
 
+    aidatas = {
+        "transactions": normal_transactions,
+        "spam": spam_filtered,
+        "last_internals":last_internals,
+        "approvals": approvals_items,
+        "token_balances": simplified_token_balances,
+        "total_transactions": summary_items[0].get("total_count") if summary_items else 0,
+        "latest_transactions": [{"gas_info_and_total_info": extracted_transaction_info}] + latest_transactions,
+    }
+
     response = {
         "spam": spam_filtered,
         "last_internals":last_internals,
@@ -96,6 +108,12 @@ async def scan():
     if lastscan:
         updated_response = compare_last_scan(lastscan,response["last_scan"])
         response["calculations"] = updated_response 
+
+    ainalyze = check_wallet_with_ai(aidatas)
+    
+    
+
+    response["zai"] = ainalyze
     
     save_response_to_database(wallet, response)
 

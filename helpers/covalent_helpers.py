@@ -87,7 +87,7 @@ async def get_latest_transactions(wallet, limit=20):
                 response_data = convert_to_dict(res)
                 transactions.append(response_data)
                 i = i+1
-                if i == 30:
+                if i == 10:
                     break
             return transactions
     except Exception as e:

@@ -16,7 +16,7 @@ def get_internal_transactions(wallet_address, start_block, end_block, page=1):
         "startblock": start_block,
         "endblock": end_block,
         "page": page,
-        "offset": 1000,
+        "offset": 10,
         "sort": "desc",
         "apikey": etherscan_api_key,
     }
@@ -37,7 +37,7 @@ def get_normal_transactions(wallet_address, start_block, end_block, page=1):
         "startblock": start_block,
         "endblock": end_block,
         "page": page,
-        "offset": 10000,
+        "offset": 10,
         "sort": "desc",
         "apikey": etherscan_api_key,
     }

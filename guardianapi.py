@@ -113,7 +113,7 @@ async def scan():
     
     
 
-    response["zai"] = ainalyze
+    response["ai"] = ainalyze
     
     save_response_to_database(wallet, response)
 

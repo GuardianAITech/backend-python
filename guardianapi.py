@@ -112,7 +112,7 @@ async def scan():
         response["calculations"] = updated_response 
 
     ainalyze = check_wallet_with_ai(aidatas)
-    response["zai"] = ainalyze
+    response["ai"] = ainalyze
     
     save_response_to_database(wallet, response)
 

@@ -160,12 +160,14 @@ async def get_approvalx():
 
 @app.route('/analyze_transaction/<transaction_hash>', methods=['GET'])
 def analyze_transaction(transaction_hash):
-    # Fetch transaction details from Etherscan
+    client_key = request.headers.get('Authorization')
+    if client_key != secret_key:
+        abort(404)
     transaction_details = get_transaction_details(transaction_hash)
 
     # Calculate safety score
     #safety_score = calculate_safety_score(transaction_details)
-    return jsonify({"transaction_details": transaction_details})
+    return jsonify(transaction_details)
     return jsonify({"transaction_details": transaction_details, "safety_score": safety_score})
 
 

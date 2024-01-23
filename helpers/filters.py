@@ -42,6 +42,15 @@ def extract_transaction_info(transactions):
 
     return totals_dict
 
+def convert_booleans(entry):
+    if isinstance(entry, list):
+        return [convert_booleans(item) for item in entry]
+    elif isinstance(entry, dict):
+        return {key: convert_booleans(value) for key, value in entry.items()}
+    elif isinstance(entry, str) and entry.lower() in ('true', 'false'):
+        return entry.lower() == 'true'
+    return entry
+
 def filter_approvals_ai(approvals):
     filtered_approvals = [
         {

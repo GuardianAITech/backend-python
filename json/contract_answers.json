@@ -1,0 +1,22 @@
+{
+  "functions": [
+    {
+      "name": "function_name",
+      "explanation": "explanation_text"
+    },
+    {
+      "name": "function_name",
+      "explanation": "explanation_text"
+    },
+    {
+      "name": "function_name",
+      "explanation": "explanation_text"
+    }
+  ],
+  "summary": [
+    {
+      "text": "summary_text",
+      "safety_score": "calculated_score"
+    }
+  ]
+}

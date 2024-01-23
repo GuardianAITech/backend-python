@@ -1,0 +1,11 @@
+{
+  "contract_events": 6,
+  "internal_transactions": 8,
+  "code_metadata": 7,
+  "account_transactions": 8,
+  "contract_source_code": 9,
+  "code_size": 7,
+  "gas_usage": 8,
+  "event_logs": 7,
+  "smart_contract_calls": 8
+}

@@ -9,6 +9,7 @@ from helpers.database import get_latest_last_scan,save_response_to_database
 from helpers.mongodb_installer import prepare_mongodb
 from ai.ai_transaction_analyzer import get_transaction_details
 from ai.ai_wallet_analyzer import check_wallet_with_ai
+from ai.ai_contract_analyzer import ai_analyze_contract
 
 import os
 import asyncio
@@ -162,12 +163,13 @@ async def get_approvalx():
 def analyze_transaction(transaction_hash):
     
     transaction_details = get_transaction_details(transaction_hash)
-
-    # Calculate safety score
-    #safety_score = calculate_safety_score(transaction_details)
     return jsonify(transaction_details)
-    return jsonify({"transaction_details": transaction_details, "safety_score": safety_score})
 
+@app.route('/analyze_contract/<contract>', methods=['GET'])
+def analyze_contract(contract):
+    
+    canalyze = ai_analyze_contract(contract)
+    return jsonify(canalyze)
 
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 5000))

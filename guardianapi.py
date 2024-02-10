@@ -161,13 +161,17 @@ async def get_approvalx():
 
 @app.route('/analyze_transaction/<transaction_hash>', methods=['GET'])
 def analyze_transaction(transaction_hash):
-    
+    client_key = request.headers.get('Authorization')
+    if client_key != secret_key:
+        abort(404)
     transaction_details = get_transaction_details(transaction_hash)
     return jsonify(transaction_details)
 
 @app.route('/analyze_contract/<contract>', methods=['GET'])
 def analyze_contract(contract):
-    
+    client_key = request.headers.get('Authorization')
+    if client_key != secret_key:
+        abort(404)
     canalyze = ai_analyze_contract(contract)
     return jsonify(canalyze)
 
